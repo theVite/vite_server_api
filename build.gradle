@@ -1,3 +1,107 @@
+/*
+=========================================================
+  Apply Plugins
+=========================================================
+ */
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'maven'
+
+/*
+=========================================================
+   Repo Info
+=========================================================
+ */
+
+group = 'com.vite'
+description = 'Vite Server API'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+/*
+=========================================================
+  Create self contained jar
+=========================================================
+*/
+
+def artifactName = 'vite-server-api'
+
+task generatePom << {
+    pom {
+        project {
+            artifactId = artifactName
+            name = artifactName
+        }
+    }.writeTo("$buildDir/tmp/maven/pom.xml")
+}
+jar {
+    baseName = artifactName
+    manifest {
+        attributes(
+                "Implementation-Title": baseName,
+                "Implementation-Version": version,
+        )
+    }
+    into("META-INF/maven/$project.group/$baseName") {
+        from "$buildDir/tmp/maven/"
+    }
+}
+jar.dependsOn generatePom
+
+/*
+=========================================================
+    Javadocs Generation
+=========================================================
+*/
+task docs(type: Javadoc) {
+    source = sourceSets.main.java
+    destinationDir = file("$project.buildDir/javadocs")
+    failOnError = false
+}
+
+task makeJavadoc(type: Jar) {
+    baseName = artifactName
+    version = project.version
+    extension = "jar"
+    classifier = "javadoc"
+    destinationDir = file("$buildDir/libs/")
+    from(files(project.files("$buildDir/javadocs"), file("$buildDir/tmp/maven/")))
+}
+makeJavadoc.dependsOn generatePom
+makeJavadoc.dependsOn docs
+
+task makeDocumentation(type: Tar) {
+    baseName = artifactName
+    version = project.version
+    extension = "tar.gz"
+    compression = Compression.GZIP
+    classifier = "javadoc"
+    destinationDir = file("$buildDir/")
+    from(project.files("$buildDir/javadocs"))
+}
+makeDocumentation.dependsOn docs
+
+/*
+=========================================================
+    Source code tar Generation
+=========================================================
+*/
+task makeSource(type: Jar) {
+    baseName = artifactName
+    version = project.version
+    extension = "jar"
+    classifier = "src"
+    destinationDir = file("$buildDir/libs/")
+    from(project.files("src"), project.file("README*"), project.file("$buildDir/tmp/maven/pom.xml"))
+}
+makeSource.dependsOn generatePom
+
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-    compile group: 'org.apache.thrift', name: 'libthrift', version: '0.9.3'
+    compile group: 'org.apache.thrift', name: 'libthrift', version:'0.9.3'
+    compileOnly group: 'org.apache.ant', name: 'ant', version: '1.8.2'
 }
