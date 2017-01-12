@@ -35,6 +35,7 @@ task generatePom << {
         }
     }.writeTo("$buildDir/tmp/maven/pom.xml")
 }
+
 jar {
     baseName = artifactName
     manifest {
@@ -48,6 +49,28 @@ jar {
     }
 }
 jar.dependsOn generatePom
+
+/*
+=========================================================
+   Generate Java Api
+=========================================================
+ */
+task generateJava(type:Exec) {
+    def srcDir = "src/main/thrift"
+    def targetDir = "src/main/java"
+    println("In task")
+
+    project.file(srcDir).listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.matches(".*\\.(thrift)");
+        }
+    }).each { file ->
+        commandLine "thrift", "--gen","java", file.absolutePath, "--out", project.file(targetDir).absolutePath
+    }
+}
+
+generatePom.dependsOn generateJava
 
 /*
 =========================================================
