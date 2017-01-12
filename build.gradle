@@ -57,8 +57,8 @@ jar.dependsOn generatePom
  */
 task generateJava(type:Exec) {
     def srcDir = "src/main/thrift"
-    def targetDir = "src/main/java"
-    println("In task")
+    def targetDir = new File("src/main/java")
+    targetDir.mkdirs()
 
     project.file(srcDir).listFiles(new FilenameFilter() {
         @Override
@@ -66,7 +66,7 @@ task generateJava(type:Exec) {
             return name.matches(".*\\.(thrift)");
         }
     }).each { file ->
-        commandLine "thrift", "--gen","java", file.absolutePath, "--out", project.file(targetDir).absolutePath
+        commandLine "thrift", "--gen","java","--out", targetDir.absolutePath,  file.absolutePath
     }
 }
 
@@ -119,6 +119,9 @@ task makeSource(type: Jar) {
     from(project.files("src"), project.file("README*"), project.file("$buildDir/tmp/maven/pom.xml"))
 }
 makeSource.dependsOn generatePom
+compileJava.dependsOn makeSource
+compileJava.dependsOn generateJava
+compileJava.dependsOn docs
 
 repositories {
     mavenCentral()
