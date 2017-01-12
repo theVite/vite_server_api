@@ -5,3 +5,6 @@
 # Gradle
 .gradle
 build/
+
+# Thrift
+java

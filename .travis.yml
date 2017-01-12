@@ -1,4 +1,9 @@
 language: java
+dist: trusty
+sudo: required
 
-jdk:
-  - oraclejdk8
+before_install:
+  - sudo apt-get install thrift-compiler
+
+script:
+  - ./gradlew build

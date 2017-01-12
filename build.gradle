@@ -35,6 +35,7 @@ task generatePom << {
         }
     }.writeTo("$buildDir/tmp/maven/pom.xml")
 }
+
 jar {
     baseName = artifactName
     manifest {
@@ -48,6 +49,28 @@ jar {
     }
 }
 jar.dependsOn generatePom
+
+/*
+=========================================================
+   Generate Java Api
+=========================================================
+ */
+task generateJava(type:Exec) {
+    def srcDir = "src/main/thrift"
+    def targetDir = new File("src/main/java")
+    targetDir.mkdirs()
+
+    project.file(srcDir).listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.matches(".*\\.(thrift)");
+        }
+    }).each { file ->
+        commandLine "thrift", "--gen","java","--out", targetDir.absolutePath,  file.absolutePath
+    }
+}
+
+generatePom.dependsOn generateJava
 
 /*
 =========================================================
@@ -96,6 +119,9 @@ task makeSource(type: Jar) {
     from(project.files("src"), project.file("README*"), project.file("$buildDir/tmp/maven/pom.xml"))
 }
 makeSource.dependsOn generatePom
+compileJava.dependsOn makeSource
+compileJava.dependsOn generateJava
+compileJava.dependsOn docs
 
 repositories {
     mavenCentral()
@@ -103,5 +129,4 @@ repositories {
 
 dependencies {
     compile group: 'org.apache.thrift', name: 'libthrift', version:'0.9.3'
-    compileOnly group: 'org.apache.ant', name: 'ant', version: '1.8.2'
 }
