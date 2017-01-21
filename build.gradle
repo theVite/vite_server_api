@@ -6,6 +6,7 @@
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 /*
 =========================================================
@@ -123,10 +124,27 @@ compileJava.dependsOn makeSource
 compileJava.dependsOn generateJava
 compileJava.dependsOn docs
 
+/*
+=========================================================
+  Publishing
+=========================================================
+*/
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = group
+            artifactId = artifactName
+            version = project.version
+
+            from components.java
+        }
+    }
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile group: 'org.apache.thrift', name: 'libthrift', version:'0.9.3'
+    compile group: 'org.apache.thrift', name: 'libthrift', version:'0.10.0'
 }
