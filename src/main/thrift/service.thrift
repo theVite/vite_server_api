@@ -7,5 +7,5 @@
  * Vite Server service
  */
 service Service {
-    void ping()
+    string ping()
 }
