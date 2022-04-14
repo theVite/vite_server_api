@@ -3,9 +3,7 @@
   Apply Plugins
 =========================================================
  */
-apply plugin: 'idea'
 apply plugin: 'java'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 /*
@@ -17,8 +15,8 @@ apply plugin: 'maven-publish'
 group = 'com.vite'
 description = 'Vite Server API'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.17
+targetCompatibility = 1.17
 
 /*
 =========================================================
@@ -28,28 +26,18 @@ targetCompatibility = 1.8
 
 def artifactName = 'vite-server-api'
 
-task generatePom << {
-    pom {
-        project {
-            artifactId = artifactName
-            name = artifactName
-        }
-    }.writeTo("$buildDir/tmp/maven/pom.xml")
-}
-
 jar {
-    baseName = artifactName
+    archiveBaseName = artifactName
     manifest {
         attributes(
-                "Implementation-Title": baseName,
-                "Implementation-Version": version,
+                "Implementation-Title": archiveBaseName,
+                "Implementation-Version": archiveVersion,
         )
     }
-    into("META-INF/maven/$project.group/$baseName") {
+    into("META-INF/maven/$project.group/$archiveBaseName") {
         from "$buildDir/tmp/maven/"
     }
 }
-jar.dependsOn generatePom
 
 /*
 =========================================================
@@ -58,7 +46,8 @@ jar.dependsOn generatePom
  */
 task generateJava(type:Exec) {
     def srcDir = "src/main/thrift"
-    def targetDir = new File("src/main/java")
+    println "$project.projectDir"
+    def targetDir = new File("$project.projectDir/src/main/java")
     targetDir.mkdirs()
 
     project.file(srcDir).listFiles(new FilenameFilter() {
@@ -71,8 +60,6 @@ task generateJava(type:Exec) {
     }
 }
 
-generatePom.dependsOn generateJava
-
 /*
 =========================================================
     Javadocs Generation
@@ -81,27 +68,26 @@ generatePom.dependsOn generateJava
 task docs(type: Javadoc) {
     source = sourceSets.main.java
     destinationDir = file("$project.buildDir/javadocs")
-    failOnError = false
+    failOnError = true
 }
 
 task makeJavadoc(type: Jar) {
-    baseName = artifactName
-    version = project.version
-    extension = "jar"
+    archiveBaseName = artifactName
+    archiveVersion = project.version
+    archiveExtension = "jar"
     classifier = "javadoc"
-    destinationDir = file("$buildDir/libs/")
+    destinationDirectory = file("$buildDir/libs/")
     from(files(project.files("$buildDir/javadocs"), file("$buildDir/tmp/maven/")))
 }
-makeJavadoc.dependsOn generatePom
 makeJavadoc.dependsOn docs
 
 task makeDocumentation(type: Tar) {
-    baseName = artifactName
-    version = project.version
-    extension = "tar.gz"
+    archiveBaseName = artifactName
+    archiveVersion = project.version
+    archiveExtension = "tar.gz"
     compression = Compression.GZIP
     classifier = "javadoc"
-    destinationDir = file("$buildDir/")
+    destinationDirectory = file("$buildDir/")
     from(project.files("$buildDir/javadocs"))
 }
 makeDocumentation.dependsOn docs
@@ -112,17 +98,15 @@ makeDocumentation.dependsOn docs
 =========================================================
 */
 task makeSource(type: Jar) {
-    baseName = artifactName
-    version = project.version
-    extension = "jar"
+    archiveBaseName = artifactName
+    archiveVersion = project.version
+    archiveExtension = "jar"
     classifier = "src"
-    destinationDir = file("$buildDir/libs/")
+    destinationDirectory = file("$buildDir/libs/")
     from(project.files("src"), project.file("README*"), project.file("$buildDir/tmp/maven/pom.xml"))
 }
-makeSource.dependsOn generatePom
 compileJava.dependsOn makeSource
 compileJava.dependsOn generateJava
-compileJava.dependsOn docs
 
 /*
 =========================================================
@@ -152,5 +136,5 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.apache.thrift', name: 'libthrift', version:'0.9.3'
+    implementation 'org.apache.thrift:libthrift:0.16.0'
 }
