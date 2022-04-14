@@ -1,0 +1,8 @@
+ext {
+    versions = [:]
+    libraries = [:]
+}
+
+versions.thrift = '0.16.0'
+
+libraries.thrift = "org.apache.thrift:libthrift:${versions.thrift}"
